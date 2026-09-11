@@ -17,6 +17,7 @@ import sqlite3
 import random
 import string
 from datetime import datetime
+from typing import Optional
 
 from telegram import (
     Update,
@@ -567,7 +568,7 @@ def btn_regex(key: str) -> str:
     import re as _re
     return r"^(" + "|".join(_re.escape(v) for v in vals) + r")$"
 
-def match_action(text: str) -> str | None:
+def match_action(text: str) -> Optional[str]:
     """Map any language button text -> action key."""
     if not text:
         return None
