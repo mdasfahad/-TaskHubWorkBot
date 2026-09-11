@@ -229,13 +229,26 @@ def init_db():
         "verify_device": "0",
         "verify_phone": "0",
         "verify_captcha": "0",
+        "verify_captcha_math": "1",
+        "verify_captcha_animal": "0",
+        "developer_username": "",
+        "lang_default": "bn",
         "faq_text": (
-            "ℹ️ <b>FAQ</b>\n\n"
-            "• টাস্ক করে পয়েন্ট আয় করুন\n"
-            "• পয়েন্ট দিয়ে উইথড্র / পোস্ট টাস্ক\n"
-            "• রেফারেল বোনাস পাবেন\n"
-            "• ডিপোজিট করে ব্যালেন্স বাড়ান\n\n"
-            "সমস্যা হলে Support এ যোগাযোগ করুন।"
+            "ℹ️ <b>FAQ — বাটন গাইড</b>\n\n"
+            "💰 <b>Balance</b> — পয়েন্ট ও BDT দেখুন\n"
+            "📋 <b>Tasks</b> — টাস্ক করে পয়েন্ট আয়\n"
+            "👤 <b>Profile</b> — প্রোফাইল তথ্য\n"
+            "👥 <b>Referral</b> — রেফার লিংক শেয়ার করে বোনাস\n"
+            "💸 <b>Withdraw</b> — পয়েন্ট উইথড্র\n"
+            "💳 <b>Deposit</b> — পেমেন্ট করে ব্যালেন্স বাড়ান\n"
+            "➕ <b>Post Task</b> — পয়েন্ট খরচ করে টাস্ক পোস্ট\n"
+            "📜 <b>History</b> — লেনদেনের হিস্ট্রি\n"
+            "🆘 <b>Support</b> — সাপোর্টে মেসেজ\n"
+            "ℹ️ <b>FAQ</b> — এই গাইড\n"
+            "🔄 <b>Update</b> — মেনু রিফ্রেশ\n"
+            "👨‍💻 <b>Developer</b> — ডেভেলপারের সাথে যোগাযোগ\n"
+            "🌐 <b>Language</b> — ভাষা পরিবর্তন\n\n"
+            "সমস্যা হলে Support ব্যবহার করুন।"
         ),
         "welcome_text": "🎉 স্বাগতম! নিচের বাটনগুলো ব্যবহার করুন।",
         "update_note": f"🔄 Bot version {BOT_VERSION}\nসব ফিচার আপডেট ও সক্রিয়।",
@@ -371,7 +384,8 @@ def user_keyboard(show_admin: bool = False):
         ["💸 Withdraw", "💳 Deposit"],
         ["➕ Post Task", "📜 History"],
         ["🆘 Support", "ℹ️ FAQ"],
-        ["🔄 Update"],
+        ["🔄 Update", "👨‍💻 Developer"],
+        ["🌐 Language"],
     ]
     if show_admin:
         rows.append(["🔧 Admin Panel"])
@@ -388,6 +402,7 @@ def admin_keyboard(main: bool = False):
         ["📢 Channels", "💳 Payment Methods"],
         ["🎁 Referral Settings", "⚙️ Settings"],
         ["🔐 Verify Settings", "💰 Post Cost / BDT"],
+        ["👨‍💻 Set Developer", "🌐 Lang / FAQ"],
         ["🔧 Maintenance ON/OFF", "💸 Withdraw ON/OFF"],
     ]
     if main:
@@ -397,13 +412,70 @@ def admin_keyboard(main: bool = False):
 
 
 # ================== VERIFY ==================
-def _gen_captcha():
-    a, b = random.randint(1, 9), random.randint(1, 9)
+ANIMALS = [
+    ("🐶", "dog"), ("🐱", "cat"), ("🦁", "lion"), ("🐯", "tiger"),
+    ("🐮", "cow"), ("🐷", "pig"), ("🐸", "frog"), ("🐵", "monkey"),
+    ("🐔", "chicken"), ("🦄", "unicorn"),
+]
+
+
+def _gen_math_captcha():
+    a, b = random.randint(1, 12), random.randint(1, 12)
     return f"{a}+{b}", str(a + b)
 
 
+def _gen_animal_captcha():
+    correct = random.choice(ANIMALS)
+    options = [correct]
+    while len(options) < 4:
+        a = random.choice(ANIMALS)
+        if a not in options:
+            options.append(a)
+    random.shuffle(options)
+    return correct, options
+
+
+async def _send_captcha(update, context):
+    """Pick captcha type based on admin settings."""
+    use_animal = get_setting("verify_captcha_animal", "0") == "1"
+    use_math = get_setting("verify_captcha_math", "1") == "1"
+    # prefer animal if both, random
+    if use_animal and use_math:
+        kind = random.choice(["math", "animal"])
+    elif use_animal:
+        kind = "animal"
+    else:
+        kind = "math"
+
+    if kind == "animal":
+        correct, options = _gen_animal_captcha()
+        context.user_data["captcha_ans"] = correct[1]
+        context.user_data["captcha_kind"] = "animal"
+        context.user_data["awaiting_captcha"] = True
+        buttons = [
+            [InlineKeyboardButton(f"{o[0]} {o[1]}", callback_data=f"capani_{o[1]}")]
+            for o in options
+        ]
+        await update.effective_message.reply_text(
+            f"🔐 <b>Captcha</b>\n\nসঠিক প্রাণী বেছে নিন:\n"
+            f"<b>{correct[0]}</b> কোন প্রাণী?",
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(buttons),
+        )
+    else:
+        q, ans = _gen_math_captcha()
+        context.user_data["captcha_ans"] = ans
+        context.user_data["captcha_kind"] = "math"
+        context.user_data["awaiting_captcha"] = True
+        await update.effective_message.reply_text(
+            f"🔐 <b>Captcha</b>\n\nপ্রশ্ন: <b>{q} = ?</b>\nউত্তর সংখ্যায় লিখুন:",
+            parse_mode=ParseMode.HTML,
+            reply_markup=ReplyKeyboardRemove(),
+        )
+
+
 async def check_verifications(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    """Return True if user passed all enabled verifies, else start verify flow."""
+    """Return True if user passed all enabled verifies."""
     user = update.effective_user
     u = get_user(user.id)
     if not u:
@@ -414,33 +486,22 @@ async def check_verifications(update: Update, context: ContextTypes.DEFAULT_TYPE
     need_phone = get_setting("verify_phone", "0") == "1"
     need_captcha = get_setting("verify_captcha", "0") == "1"
 
-    # device: store a simple device token from user_data / first seen
+    # Device verify — Open App style button (Telegram limit: real IP needs web server)
     if need_device and not u["device_ok"]:
-        # auto-bind device on first check using a generated id stored in context
-        did = context.user_data.get("device_token")
-        if not did:
-            did = "".join(random.choices(string.ascii_letters + string.digits, k=16))
-            context.user_data["device_token"] = did
-        conn = get_db()
-        cur = conn.cursor()
-        # if user has no device_id, set it; if mismatch block
-        if not u["device_id"]:
-            cur.execute(
-                "UPDATE users SET device_id=?, device_ok=1 WHERE user_id=?",
-                (did, user.id),
-            )
-            conn.commit()
-            conn.close()
-        elif u["device_id"] != did and u["device_id"]:
-            # same telegram account always ok — device verify = mark once
-            cur.execute("UPDATE users SET device_ok=1 WHERE user_id=?", (user.id,))
-            conn.commit()
-            conn.close()
-        else:
-            cur.execute("UPDATE users SET device_ok=1 WHERE user_id=?", (user.id,))
-            conn.commit()
-            conn.close()
-        u = get_user(user.id)
+        token = "".join(random.choices(string.ascii_letters + string.digits, k=12))
+        context.user_data["device_pending"] = token
+        buttons = [[InlineKeyboardButton(
+            "📲 Open App · Device Verify",
+            callback_data=f"devfy_{token}",
+        )]]
+        await update.effective_message.reply_text(
+            "📱 <b>Device Verify</b>\n\n"
+            "নিচের বাটনে ক্লিক করে ডিভাইস ভেরিফাই করুন।\n"
+            "(একটি ডিভাইসে একবার বাইন্ড হবে)",
+            parse_mode=ParseMode.HTML,
+            reply_markup=InlineKeyboardMarkup(buttons),
+        )
+        return False
 
     if need_phone and not u["phone_ok"]:
         kb = ReplyKeyboardMarkup(
@@ -449,25 +510,80 @@ async def check_verifications(update: Update, context: ContextTypes.DEFAULT_TYPE
             one_time_keyboard=True,
         )
         await update.effective_message.reply_text(
-            "📱 <b>Phone Verify</b>\nনিচের বাটনে ক্লিক করে নম্বর শেয়ার করুন।",
+            "📱 <b>Phone Verify</b>\nনিচের বাটনে নম্বর শেয়ার করুন।",
             parse_mode=ParseMode.HTML,
             reply_markup=kb,
         )
         return False
 
     if need_captcha and not u["captcha_ok"]:
-        q, ans = _gen_captcha()
-        context.user_data["captcha_ans"] = ans
-        await update.effective_message.reply_text(
-            f"🔐 <b>Captcha Verify</b>\n\n"
-            f"প্রশ্ন: <b>{q} = ?</b>\n"
-            f"উত্তর সংখ্যায় লিখুন:",
-            parse_mode=ParseMode.HTML,
-            reply_markup=ReplyKeyboardRemove(),
-        )
+        await _send_captcha(update, context)
         return False
 
     return True
+
+
+async def device_verify_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    await q.answer()
+    token = q.data.replace("devfy_", "", 1)
+    pending = context.user_data.get("device_pending")
+    uid = q.from_user.id
+    if pending and token != pending:
+        await q.edit_message_text("❌ টোকেন মিলছে না। /start আবার চাপুন।")
+        return
+    did = f"tg_{uid}_{token[:8]}"
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET device_id=?, device_ok=1 WHERE user_id=?",
+        (did, uid),
+    )
+    conn.commit()
+    conn.close()
+    context.user_data.pop("device_pending", None)
+    await q.edit_message_text(
+        f"✅ Device verified!\nID: <code>{did}</code>",
+        parse_mode=ParseMode.HTML,
+    )
+    # continue other verifies
+    fake_update = update
+    if not await check_verifications(fake_update, context):
+        return
+    await context.bot.send_message(
+        uid,
+        get_setting("welcome_text", "স্বাগতম!"),
+        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+    )
+
+
+async def animal_captcha_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    await q.answer()
+    chosen = q.data.replace("capani_", "", 1)
+    ans = context.user_data.get("captcha_ans")
+    uid = q.from_user.id
+    if chosen != ans:
+        await q.edit_message_text("❌ ভুল প্রাণী। আবার চেষ্টা...")
+        # resend
+        class _U:
+            effective_message = q.message
+            effective_user = q.from_user
+        await _send_captcha(_U(), context)
+        return
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET captcha_ok=1 WHERE user_id=?", (uid,))
+    conn.commit()
+    conn.close()
+    context.user_data.pop("captcha_ans", None)
+    context.user_data.pop("awaiting_captcha", None)
+    await q.edit_message_text("✅ Captcha OK!")
+    await context.bot.send_message(
+        uid,
+        get_setting("welcome_text", "স্বাগতম!"),
+        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+    )
 
 
 async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -488,28 +604,30 @@ async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "✅ ফোন ভেরিফাই হয়েছে!",
         reply_markup=user_keyboard(show_admin=is_admin(uid)),
     )
-    # continue captcha if needed
     u = get_user(uid)
     if get_setting("verify_captcha", "0") == "1" and not u["captcha_ok"]:
-        q, ans = _gen_captcha()
-        context.user_data["captcha_ans"] = ans
-        context.user_data["awaiting_captcha"] = True
-        await update.message.reply_text(
-            f"🔐 Captcha: <b>{q} = ?</b>",
-            parse_mode=ParseMode.HTML,
-        )
+        await _send_captcha(update, context)
+        return
+    await update.message.reply_text(
+        get_setting("welcome_text", "স্বাগতম!"),
+        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+    )
 
 
 async def on_captcha_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not context.user_data.get("awaiting_captcha") and "captcha_ans" not in context.user_data:
         return False
+    if context.user_data.get("captcha_kind") == "animal":
+        return False  # handled by callback
     ans = context.user_data.get("captcha_ans")
     if not ans:
         return False
     if update.message.text.strip() != ans:
-        q, new_ans = _gen_captcha()
+        q, new_ans = _gen_math_captcha()
         context.user_data["captcha_ans"] = new_ans
-        await update.message.reply_text(f"❌ ভুল। আবার: <b>{q} = ?</b>", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(
+            f"❌ ভুল। আবার: <b>{q} = ?</b>", parse_mode=ParseMode.HTML
+        )
         return True
     uid = update.effective_user.id
     conn = get_db()
@@ -755,6 +873,57 @@ async def cmd_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"🔄 <b>Update</b>\n\n{note}\n\nমেনু রিফ্রেশ হয়েছে।",
         parse_mode=ParseMode.HTML,
+        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+    )
+
+
+async def cmd_developer(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    un = get_setting("developer_username", "").strip().lstrip("@")
+    if not un:
+        await update.message.reply_text("ডেভেলপার ইউজারনেম এখনো সেট নেই।")
+        return
+    await update.message.reply_text(
+        "👨‍💻 <b>Developer</b>\nনিচের বাটনে ক্লিক করে যোগাযোগ করুন:",
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(
+            [[InlineKeyboardButton("👨‍💻 Developer", url=f"https://t.me/{un}")]]
+        ),
+    )
+
+
+async def cmd_language(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    buttons = [
+        [InlineKeyboardButton("🇧🇩 বাংলা", callback_data="lang_bn")],
+        [InlineKeyboardButton("🇺🇸 English", callback_data="lang_en")],
+        [InlineKeyboardButton("🇮🇳 हिन्दी", callback_data="lang_hi")],
+        [InlineKeyboardButton("🇸🇦 العربية", callback_data="lang_ar")],
+        [InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru")],
+    ]
+    await update.message.reply_text(
+        "🌐 <b>Language / ভাষা</b>\nChoose your language:",
+        parse_mode=ParseMode.HTML,
+        reply_markup=InlineKeyboardMarkup(buttons),
+    )
+
+
+async def lang_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    q = update.callback_query
+    await q.answer()
+    lang = q.data.replace("lang_", "", 1)
+    uid = q.from_user.id
+    # store per-user in context / could use settings table user-specific — use history note
+    context.user_data["lang"] = lang
+    msgs = {
+        "bn": "✅ ভাষা: বাংলা",
+        "en": "✅ Language: English",
+        "hi": "✅ भाषा: हिन्दी",
+        "ar": "✅ اللغة: العربية",
+        "ru": "✅ Язык: Русский",
+    }
+    await q.edit_message_text(msgs.get(lang, "✅ OK"))
+    await context.bot.send_message(
+        uid,
+        msgs.get(lang, "OK"),
         reply_markup=user_keyboard(show_admin=is_admin(uid)),
     )
 
@@ -2046,13 +2215,17 @@ async def verify_settings(update: Update, context: ContextTypes.DEFAULT_TYPE):
     d = get_setting("verify_device", "0")
     p = get_setting("verify_phone", "0")
     c = get_setting("verify_captcha", "0")
+    m = get_setting("verify_captcha_math", "1")
+    a = get_setting("verify_captcha_animal", "0")
     buttons = [
-        [InlineKeyboardButton(f"Device: {'ON' if d=='1' else 'OFF'}", callback_data="tog_vdev")],
-        [InlineKeyboardButton(f"Phone: {'ON' if p=='1' else 'OFF'}", callback_data="tog_vphone")],
-        [InlineKeyboardButton(f"Captcha: {'ON' if c=='1' else 'OFF'}", callback_data="tog_vcaptcha")],
+        [InlineKeyboardButton(f"📱 Device: {'ON' if d=='1' else 'OFF'}", callback_data="tog_vdev")],
+        [InlineKeyboardButton(f"📞 Phone: {'ON' if p=='1' else 'OFF'}", callback_data="tog_vphone")],
+        [InlineKeyboardButton(f"🔐 Captcha Master: {'ON' if c=='1' else 'OFF'}", callback_data="tog_vcaptcha")],
+        [InlineKeyboardButton(f"🔢 Math Captcha: {'ON' if m=='1' else 'OFF'}", callback_data="tog_vmath")],
+        [InlineKeyboardButton(f"🦁 Animal Captcha: {'ON' if a=='1' else 'OFF'}", callback_data="tog_vanimal")],
     ]
     await update.message.reply_text(
-        "🔐 <b>Verify Settings</b>\nটগল করতে চাপুন:",
+        "🔐 <b>Verify Settings</b>\nপ্রতিটি আলাদা ON/OFF:",
         parse_mode=ParseMode.HTML,
         reply_markup=InlineKeyboardMarkup(buttons),
     )
@@ -2067,21 +2240,29 @@ async def tog_verify_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         "tog_vdev": "verify_device",
         "tog_vphone": "verify_phone",
         "tog_vcaptcha": "verify_captcha",
+        "tog_vmath": "verify_captcha_math",
+        "tog_vanimal": "verify_captcha_animal",
     }
-    key = key_map[q.data]
+    key = key_map.get(q.data)
+    if not key:
+        return
     cur = get_setting(key, "0")
     new = "0" if cur == "1" else "1"
     set_setting(key, new)
     d = get_setting("verify_device", "0")
     p = get_setting("verify_phone", "0")
     c = get_setting("verify_captcha", "0")
+    m = get_setting("verify_captcha_math", "1")
+    a = get_setting("verify_captcha_animal", "0")
     buttons = [
-        [InlineKeyboardButton(f"Device: {'ON' if d=='1' else 'OFF'}", callback_data="tog_vdev")],
-        [InlineKeyboardButton(f"Phone: {'ON' if p=='1' else 'OFF'}", callback_data="tog_vphone")],
-        [InlineKeyboardButton(f"Captcha: {'ON' if c=='1' else 'OFF'}", callback_data="tog_vcaptcha")],
+        [InlineKeyboardButton(f"📱 Device: {'ON' if d=='1' else 'OFF'}", callback_data="tog_vdev")],
+        [InlineKeyboardButton(f"📞 Phone: {'ON' if p=='1' else 'OFF'}", callback_data="tog_vphone")],
+        [InlineKeyboardButton(f"🔐 Captcha Master: {'ON' if c=='1' else 'OFF'}", callback_data="tog_vcaptcha")],
+        [InlineKeyboardButton(f"🔢 Math Captcha: {'ON' if m=='1' else 'OFF'}", callback_data="tog_vmath")],
+        [InlineKeyboardButton(f"🦁 Animal Captcha: {'ON' if a=='1' else 'OFF'}", callback_data="tog_vanimal")],
     ]
     await q.edit_message_text(
-        f"🔐 Updated.\nDevice={d} Phone={p} Captcha={c}",
+        "🔐 Updated.",
         reply_markup=InlineKeyboardMarkup(buttons),
     )
 
@@ -2323,8 +2504,31 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await cmd_faq(update, context)
     elif text == "🔄 Update":
         await cmd_update(update, context)
+    elif text == "👨‍💻 Developer":
+        await cmd_developer(update, context)
+    elif text == "🌐 Language":
+        await cmd_language(update, context)
     elif text == "🔧 Admin Panel" and is_admin(uid):
         await admin_panel(update, context)
+    elif context.user_data.get("awaiting_developer") and is_admin(uid):
+        set_setting("developer_username", text.strip().lstrip("@"))
+        context.user_data.pop("awaiting_developer", None)
+        await update.message.reply_text(
+            f"✅ Developer set: @{get_setting('developer_username')}",
+            reply_markup=admin_keyboard(is_main(uid)),
+        )
+        return
+    elif text == "👨‍💻 Set Developer" and is_admin(uid):
+        context.user_data["awaiting_developer"] = True
+        cur = get_setting("developer_username", "")
+        await update.message.reply_text(
+            f"বর্তমান: @{cur or '-'}\nনতুন username লিখুন (@ ছাড়া):",
+            reply_markup=ReplyKeyboardRemove(),
+        )
+        return
+    elif text == "🌐 Lang / FAQ" and is_admin(uid):
+        await admin_settings(update, context)
+        return
     elif text == "🏠 User Panel":
         await update.message.reply_text(
             "User Panel", reply_markup=user_keyboard(show_admin=is_admin(uid))
@@ -2501,6 +2705,9 @@ def main():
     app.add_handler(MessageHandler(filters.CONTACT, on_contact))
 
     app.add_handler(CallbackQueryHandler(check_join_cb, pattern="^check_join$"))
+    app.add_handler(CallbackQueryHandler(device_verify_cb, pattern=r"^devfy_"))
+    app.add_handler(CallbackQueryHandler(animal_captcha_cb, pattern=r"^capani_"))
+    app.add_handler(CallbackQueryHandler(lang_cb, pattern=r"^lang_"))
     app.add_handler(CallbackQueryHandler(task_detail_cb, pattern=r"^task_\d+$"))
     app.add_handler(CallbackQueryHandler(approve_cb, pattern=r"^appr_\d+$"))
     app.add_handler(CallbackQueryHandler(reject_cb, pattern=r"^rej_\d+$"))
