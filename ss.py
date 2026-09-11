@@ -212,6 +212,7 @@ def init_db():
         ("captcha_ok", "INTEGER DEFAULT 0"),
         ("phone_ok", "INTEGER DEFAULT 0"),
         ("device_ok", "INTEGER DEFAULT 0"),
+        ("lang", "TEXT DEFAULT 'bn'"),
     ]:
         try:
             cur.execute(f"ALTER TABLE users ADD COLUMN {col} {typ}")
@@ -376,19 +377,253 @@ def get_channels():
     return rows
 
 
+
+# ================== I18N ==================
+# Full UI translations — keyboard + common replies
+T = {
+    "bn": {
+        "btn_balance": "💰 Balance",
+        "btn_tasks": "📋 Tasks",
+        "btn_profile": "👤 Profile",
+        "btn_referral": "👥 Referral",
+        "btn_withdraw": "💸 Withdraw",
+        "btn_deposit": "💳 Deposit",
+        "btn_post": "➕ Post Task",
+        "btn_history": "📜 History",
+        "btn_support": "🆘 Support",
+        "btn_faq": "ℹ️ FAQ",
+        "btn_update": "🔄 Update",
+        "btn_developer": "👨‍💻 Developer",
+        "btn_language": "🌐 Language",
+        "btn_admin": "🔧 Admin Panel",
+        "btn_user_panel": "🏠 User Panel",
+        "welcome": "🎉 স্বাগতম! নিচের বাটনগুলো ব্যবহার করুন।",
+        "balance": "💰 <b>Balance:</b> {pts} পয়েন্ট\n≈ {bdt:.2f} BDT",
+        "blocked": "আপনি ব্লক।",
+        "maintenance": "🔧 Maintenance মোড। পরে আসুন।",
+        "enter_uid": "User ID পাঠান:",
+        "enter_amount": "বর্তমান: {pts}\nপরিমাণ লিখুন (শুধু সংখ্যা):",
+        "invalid_number": "❌ সঠিক সংখ্যা লিখুন (যেমন: 100)",
+        "user_not_found": "ইউজার পাওয়া যায়নি।",
+        "cancelled": "বাতিল করা হয়েছে।",
+        "lang_set": "✅ ভাষা: বাংলা",
+        "menu_refreshed": "মেনু রিফ্রেশ হয়েছে।",
+    },
+    "en": {
+        "btn_balance": "💰 Balance",
+        "btn_tasks": "📋 Tasks",
+        "btn_profile": "👤 Profile",
+        "btn_referral": "👥 Referral",
+        "btn_withdraw": "💸 Withdraw",
+        "btn_deposit": "💳 Deposit",
+        "btn_post": "➕ Post Task",
+        "btn_history": "📜 History",
+        "btn_support": "🆘 Support",
+        "btn_faq": "ℹ️ FAQ",
+        "btn_update": "🔄 Update",
+        "btn_developer": "👨‍💻 Developer",
+        "btn_language": "🌐 Language",
+        "btn_admin": "🔧 Admin Panel",
+        "btn_user_panel": "🏠 User Panel",
+        "welcome": "🎉 Welcome! Use the buttons below.",
+        "balance": "💰 <b>Balance:</b> {pts} points\n≈ {bdt:.2f} BDT",
+        "blocked": "You are blocked.",
+        "maintenance": "🔧 Maintenance mode. Try later.",
+        "enter_uid": "Send User ID:",
+        "enter_amount": "Current: {pts}\nEnter amount (number only):",
+        "invalid_number": "❌ Enter a valid number (e.g. 100)",
+        "user_not_found": "User not found.",
+        "cancelled": "Cancelled.",
+        "lang_set": "✅ Language: English",
+        "menu_refreshed": "Menu refreshed.",
+    },
+    "hi": {
+        "btn_balance": "💰 बैलेंस",
+        "btn_tasks": "📋 टास्क",
+        "btn_profile": "👤 प्रोफ़ाइल",
+        "btn_referral": "👥 रेफरल",
+        "btn_withdraw": "💸 विड्रॉ",
+        "btn_deposit": "💳 डिपॉजिट",
+        "btn_post": "➕ पोस्ट टास्क",
+        "btn_history": "📜 हिस्ट्री",
+        "btn_support": "🆘 सपोर्ट",
+        "btn_faq": "ℹ️ FAQ",
+        "btn_update": "🔄 अपडेट",
+        "btn_developer": "👨‍💻 डेवलपर",
+        "btn_language": "🌐 भाषा",
+        "btn_admin": "🔧 एडमिन पैनल",
+        "btn_user_panel": "🏠 यूज़र पैनल",
+        "welcome": "🎉 स्वागत है! नीचे बटन उपयोग करें।",
+        "balance": "💰 <b>बैलेंस:</b> {pts} पॉइंट\n≈ {bdt:.2f} BDT",
+        "blocked": "आप ब्लॉक हैं।",
+        "maintenance": "🔧 मेंटनेंस मोड।",
+        "enter_uid": "User ID भेजें:",
+        "enter_amount": "वर्तमान: {pts}\nराशि लिखें:",
+        "invalid_number": "❌ सही संख्या लिखें",
+        "user_not_found": "यूज़र नहीं मिला।",
+        "cancelled": "रद्द।",
+        "lang_set": "✅ भाषा: हिन्दी",
+        "menu_refreshed": "मेनू रिफ्रेश।",
+    },
+    "ar": {
+        "btn_balance": "💰 الرصيد",
+        "btn_tasks": "📋 المهام",
+        "btn_profile": "👤 الملف",
+        "btn_referral": "👥 الإحالة",
+        "btn_withdraw": "💸 سحب",
+        "btn_deposit": "💳 إيداع",
+        "btn_post": "➕ نشر مهمة",
+        "btn_history": "📜 السجل",
+        "btn_support": "🆘 الدعم",
+        "btn_faq": "ℹ️ FAQ",
+        "btn_update": "🔄 تحديث",
+        "btn_developer": "👨‍💻 المطور",
+        "btn_language": "🌐 اللغة",
+        "btn_admin": "🔧 لوحة الإدارة",
+        "btn_user_panel": "🏠 لوحة المستخدم",
+        "welcome": "🎉 مرحباً! استخدم الأزرار أدناه.",
+        "balance": "💰 <b>الرصيد:</b> {pts}\n≈ {bdt:.2f} BDT",
+        "blocked": "أنت محظور.",
+        "maintenance": "🔧 وضع الصيانة.",
+        "enter_uid": "أرسل معرف المستخدم:",
+        "enter_amount": "الحالي: {pts}\nأدخل المبلغ:",
+        "invalid_number": "❌ أدخل رقماً صحيحاً",
+        "user_not_found": "المستخدم غير موجود.",
+        "cancelled": "تم الإلغاء.",
+        "lang_set": "✅ اللغة: العربية",
+        "menu_refreshed": "تم تحديث القائمة.",
+    },
+    "ru": {
+        "btn_balance": "💰 Баланс",
+        "btn_tasks": "📋 Задания",
+        "btn_profile": "👤 Профиль",
+        "btn_referral": "👥 Реферал",
+        "btn_withdraw": "💸 Вывод",
+        "btn_deposit": "💳 Депозит",
+        "btn_post": "➕ Пост задания",
+        "btn_history": "📜 История",
+        "btn_support": "🆘 Поддержка",
+        "btn_faq": "ℹ️ FAQ",
+        "btn_update": "🔄 Обновить",
+        "btn_developer": "👨‍💻 Разработчик",
+        "btn_language": "🌐 Язык",
+        "btn_admin": "🔧 Админ",
+        "btn_user_panel": "🏠 Пользователь",
+        "welcome": "🎉 Добро пожаловать!",
+        "balance": "💰 <b>Баланс:</b> {pts}\n≈ {bdt:.2f} BDT",
+        "blocked": "Вы заблокированы.",
+        "maintenance": "🔧 Техработы.",
+        "enter_uid": "Отправьте User ID:",
+        "enter_amount": "Сейчас: {pts}\nВведите сумму:",
+        "invalid_number": "❌ Введите число",
+        "user_not_found": "Пользователь не найден.",
+        "cancelled": "Отменено.",
+        "lang_set": "✅ Язык: Русский",
+        "menu_refreshed": "Меню обновлено.",
+    },
+}
+
+
+def get_user_lang(uid: int) -> str:
+    u = get_user(uid)
+    if u:
+        try:
+            lang = u["lang"] or "bn"
+            if lang in T:
+                return lang
+        except Exception:
+            pass
+    return get_setting("lang_default", "bn") or "bn"
+
+
+def set_user_lang(uid: int, lang: str):
+    if lang not in T:
+        lang = "bn"
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute("UPDATE users SET lang=? WHERE user_id=?", (lang, uid))
+    conn.commit()
+    conn.close()
+
+
+def tr(uid_or_lang, key: str, **kwargs) -> str:
+    if isinstance(uid_or_lang, int):
+        lang = get_user_lang(uid_or_lang)
+    else:
+        lang = uid_or_lang if uid_or_lang in T else "bn"
+    s = T.get(lang, T["en"]).get(key) or T["en"].get(key) or key
+    if kwargs:
+        try:
+            return s.format(**kwargs)
+        except Exception:
+            return s
+    return s
+
+
+
+def btn_regex(key: str) -> str:
+    vals = sorted({T[l].get(key, "") for l in T if T[l].get(key)}, key=len, reverse=True)
+    vals = [v for v in vals if v]
+    import re as _re
+    return r"^(" + "|".join(_re.escape(v) for v in vals) + r")$"
+
+def match_action(text: str) -> str | None:
+    """Map any language button text -> action key."""
+    if not text:
+        return None
+    text = text.strip()
+    for lang_dict in T.values():
+        for key, val in lang_dict.items():
+            if key.startswith("btn_") and val == text:
+                return key
+    # also match English hardcoded admin buttons (admin panel stays English for stability)
+    admin_map = {
+        "👥 Users": "admin_users",
+        "📊 Statistics": "admin_stats",
+        "➕ Add Balance": "admin_add_bal",
+        "➖ Remove Balance": "admin_rm_bal",
+        "📋 Manage Tasks": "admin_tasks",
+        "📥 Submissions": "admin_subs",
+        "📝 User Posts": "admin_uposts",
+        "📢 Broadcast": "admin_broadcast",
+        "💸 Withdrawals": "admin_wds",
+        "💳 Deposits": "admin_deps",
+        "📢 Channels": "admin_channels",
+        "💳 Payment Methods": "admin_pay",
+        "🎁 Referral Settings": "admin_ref",
+        "⚙️ Settings": "admin_settings",
+        "🔐 Verify Settings": "admin_verify",
+        "💰 Post Cost / BDT": "admin_postcost",
+        "👨‍💻 Set Developer": "admin_setdev",
+        "🌐 Lang / FAQ": "admin_langfaq",
+        "🔧 Maintenance ON/OFF": "admin_maint",
+        "💸 Withdraw ON/OFF": "admin_wdtoggle",
+        "👑 Add/Remove Admin": "admin_admins",
+        "🔄 Ownership Transfer": "admin_owner",
+        "🏠 User Panel": "btn_user_panel",
+    }
+    return admin_map.get(text)
+
+
 # ================== KEYBOARDS ==================
-def user_keyboard(show_admin: bool = False):
+def user_keyboard(show_admin: bool = False, lang: str = None, uid: int = None):
+    if lang is None and uid is not None:
+        lang = get_user_lang(uid)
+    if lang is None:
+        lang = "bn"
+    def b(key):
+        return tr(lang, key)
     rows = [
-        ["💰 Balance", "📋 Tasks"],
-        ["👤 Profile", "👥 Referral"],
-        ["💸 Withdraw", "💳 Deposit"],
-        ["➕ Post Task", "📜 History"],
-        ["🆘 Support", "ℹ️ FAQ"],
-        ["🔄 Update", "👨‍💻 Developer"],
-        ["🌐 Language"],
+        [b("btn_balance"), b("btn_tasks")],
+        [b("btn_profile"), b("btn_referral")],
+        [b("btn_withdraw"), b("btn_deposit")],
+        [b("btn_post"), b("btn_history")],
+        [b("btn_support"), b("btn_faq")],
+        [b("btn_update"), b("btn_developer")],
+        [b("btn_language")],
     ]
     if show_admin:
-        rows.append(["🔧 Admin Panel"])
+        rows.append([b("btn_admin")])
     return ReplyKeyboardMarkup(rows, resize_keyboard=True)
 
 
@@ -553,7 +788,7 @@ async def device_verify_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         uid,
         get_setting("welcome_text", "স্বাগতম!"),
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
 
 
@@ -582,7 +817,7 @@ async def animal_captcha_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await context.bot.send_message(
         uid,
         get_setting("welcome_text", "স্বাগতম!"),
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
 
 
@@ -602,7 +837,7 @@ async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
     await update.message.reply_text(
         "✅ ফোন ভেরিফাই হয়েছে!",
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
     u = get_user(uid)
     if get_setting("verify_captcha", "0") == "1" and not u["captcha_ok"]:
@@ -610,7 +845,7 @@ async def on_contact(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     await update.message.reply_text(
         get_setting("welcome_text", "স্বাগতম!"),
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
 
 
@@ -639,7 +874,7 @@ async def on_captcha_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
     context.user_data.pop("awaiting_captcha", None)
     await update.message.reply_text(
         "✅ Captcha OK!",
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
     return True
 
@@ -772,18 +1007,19 @@ async def cancel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.effective_user.id
     await update.message.reply_text(
         "বাতিল।",
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
     return ConversationHandler.END
 
 
 # ================== USER MENUS ==================
 async def cmd_balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    u = get_user(update.effective_user.id)
+    uid = update.effective_user.id
+    u = get_user(uid)
     pts = u["points"] if u else 0
-    bdt = float(get_setting("point_value_bdt", "0.10"))
+    bdt_rate = float(get_setting("point_value_bdt", "0.10"))
     await update.message.reply_text(
-        f"💰 <b>Balance:</b> {pts} পয়েন্ট\n≈ {pts * bdt:.2f} BDT",
+        tr(uid, "balance", pts=pts, bdt=pts * bdt_rate),
         parse_mode=ParseMode.HTML,
     )
 
@@ -873,7 +1109,7 @@ async def cmd_update(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"🔄 <b>Update</b>\n\n{note}\n\nমেনু রিফ্রেশ হয়েছে।",
         parse_mode=ParseMode.HTML,
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
 
 
@@ -910,21 +1146,17 @@ async def lang_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     await q.answer()
     lang = q.data.replace("lang_", "", 1)
+    if lang not in T:
+        lang = "bn"
     uid = q.from_user.id
-    # store per-user in context / could use settings table user-specific — use history note
+    set_user_lang(uid, lang)
     context.user_data["lang"] = lang
-    msgs = {
-        "bn": "✅ ভাষা: বাংলা",
-        "en": "✅ Language: English",
-        "hi": "✅ भाषा: हिन्दी",
-        "ar": "✅ اللغة: العربية",
-        "ru": "✅ Язык: Русский",
-    }
-    await q.edit_message_text(msgs.get(lang, "✅ OK"))
+    msg = tr(lang, "lang_set")
+    await q.edit_message_text(msg)
     await context.bot.send_message(
         uid,
-        msgs.get(lang, "OK"),
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        tr(lang, "welcome") + "\n" + tr(lang, "menu_refreshed"),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid, lang=lang),
     )
 
 
@@ -1043,7 +1275,7 @@ async def proof_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
     await update.message.reply_text(
         "✅ প্রুফ সাবমিট! অ্যাডমিন রিভিউ করবে।",
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
     context.user_data.clear()
     return ConversationHandler.END
@@ -1095,7 +1327,7 @@ async def post_task_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     cost = float(get_setting("post_task_cost", "50"))
     u = get_user(uid)
     if not u or u["points"] < cost:
-        await update.message.reply_text("❌ পর্যাপ্ত পয়েন্ট নেই।", reply_markup=user_keyboard(is_admin(uid)))
+        await update.message.reply_text("❌ পর্যাপ্ত পয়েন্ট নেই।", reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid))
         context.user_data.clear()
         return ConversationHandler.END
 
@@ -1120,7 +1352,7 @@ async def post_task_reward(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
         f"✅ টাস্ক পোস্ট সাবমিট!\n-{cost} পয়েন্ট কাটা হয়েছে।\n"
         f"অ্যাডমিন অ্যাপ্রুভ করলে লাইভ হবে।",
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
     try:
         await context.bot.send_message(
@@ -1195,7 +1427,7 @@ async def withdraw_method(update: Update, context: ContextTypes.DEFAULT_TYPE):
     add_history(uid, "withdraw", -amt, details)
     await update.message.reply_text(
         "✅ উইথড্র রিকোয়েস্ট পাঠানো হয়েছে।",
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
     try:
         await context.bot.send_message(
@@ -1256,7 +1488,7 @@ async def deposit_proof(update: Update, context: ContextTypes.DEFAULT_TYPE):
     conn.close()
     await update.message.reply_text(
         "✅ ডিপোজিট রিকোয়েস্ট পাঠানো হয়েছে।",
-        reply_markup=user_keyboard(show_admin=is_admin(uid)),
+        reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid),
     )
     try:
         await context.bot.send_photo(
@@ -1336,38 +1568,74 @@ async def admin_stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
 async def balance_start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not is_admin(update.effective_user.id):
         return ConversationHandler.END
+    # clear previous partial state
+    for k in list(context.user_data.keys()):
+        if k.startswith("bal_"):
+            context.user_data.pop(k, None)
     op = "add" if "Add" in (update.message.text or "") else "remove"
     context.user_data["bal_op"] = op
-    await update.message.reply_text("User ID:", reply_markup=ReplyKeyboardRemove())
+    await update.message.reply_text(
+        "User ID পাঠান (শুধু সংখ্যা):\nবাতিল: /cancel",
+        reply_markup=ReplyKeyboardRemove(),
+    )
     return BALANCE_UID
 
 
 async def balance_uid(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    raw = (update.message.text or "").strip()
+    admin = update.effective_user.id
+    if raw.startswith("/") or match_action(raw):
+        context.user_data.clear()
+        await update.message.reply_text(
+            "বাতিল।",
+            reply_markup=admin_keyboard(is_main(admin)),
+        )
+        return ConversationHandler.END
     try:
-        uid = int(update.message.text.strip())
+        uid = int(raw)
     except ValueError:
-        await update.message.reply_text("সঠিক ID।")
+        await update.message.reply_text("❌ সঠিক User ID লিখুন (শুধু সংখ্যা)।\n/cancel")
         return BALANCE_UID
     u = get_user(uid)
     if not u:
-        await update.message.reply_text("ইউজার নেই।")
+        await update.message.reply_text("❌ ইউজার নেই। আবার ID দিন বা /cancel")
         return BALANCE_UID
     context.user_data["bal_uid"] = uid
-    await update.message.reply_text(f"বর্তমান: {u['points']}\nপরিমাণ:")
+    await update.message.reply_text(
+        f"বর্তমান: <b>{u['points']}</b>\nকত পয়েন্ট? (শুধু সংখ্যা, যেমন: 100)",
+        parse_mode=ParseMode.HTML,
+    )
     return BALANCE_AMT
 
 
 async def balance_amt(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    raw = (update.message.text or "").strip().replace(",", "")
+    admin = update.effective_user.id
+    if raw.startswith("/") or match_action(raw):
+        context.user_data.clear()
+        await update.message.reply_text(
+            "বাতিল।",
+            reply_markup=admin_keyboard(is_main(admin)),
+        )
+        return ConversationHandler.END
     try:
-        amt = float(update.message.text.strip())
+        amt = float(raw)
         if amt <= 0:
             raise ValueError
     except ValueError:
-        await update.message.reply_text("সঠিক সংখ্যা।")
+        await update.message.reply_text(
+            "❌ সঠিক সংখ্যা লিখুন (যেমন: 100)।\nমেনুতে ফিরতে /cancel"
+        )
         return BALANCE_AMT
-    uid = context.user_data["bal_uid"]
+    uid = context.user_data.get("bal_uid")
+    if not uid:
+        await update.message.reply_text(
+            "সেশন শেষ। আবার Add Balance চাপুন।",
+            reply_markup=admin_keyboard(is_main(admin)),
+        )
+        context.user_data.clear()
+        return ConversationHandler.END
     op = context.user_data.get("bal_op", "add")
-    admin = update.effective_user.id
     conn = get_db()
     cur = conn.cursor()
     if op == "remove":
@@ -2482,7 +2750,38 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("🔧 Maintenance।")
         return
 
-    if text == "💰 Balance":
+    action = match_action(text)
+
+    if action == "btn_balance":
+        await cmd_balance(update, context)
+    elif action == "btn_tasks":
+        await cmd_tasks(update, context)
+    elif action == "btn_profile":
+        await cmd_profile(update, context)
+    elif action == "btn_referral":
+        await cmd_referral(update, context)
+    elif action == "btn_withdraw":
+        return await withdraw_start(update, context)
+    elif action == "btn_deposit":
+        return await deposit_start(update, context)
+    elif action == "btn_post":
+        return await post_task_start(update, context)
+    elif action == "btn_history":
+        await cmd_history(update, context)
+    elif action == "btn_support":
+        await cmd_support(update, context)
+    elif action == "btn_faq":
+        await cmd_faq(update, context)
+    elif action == "btn_update":
+        await cmd_update(update, context)
+    elif action == "btn_developer":
+        await cmd_developer(update, context)
+    elif action == "btn_language":
+        await cmd_language(update, context)
+    elif action == "btn_admin" and is_admin(uid):
+        await admin_panel(update, context)
+    # legacy English buttons still work
+    elif text == "💰 Balance":
         await cmd_balance(update, context)
     elif text == "📋 Tasks":
         await cmd_tasks(update, context)
@@ -2531,7 +2830,7 @@ async def handle_text(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     elif text == "🏠 User Panel":
         await update.message.reply_text(
-            "User Panel", reply_markup=user_keyboard(show_admin=is_admin(uid))
+            "User Panel", reply_markup=user_keyboard(show_admin=is_admin(uid), uid=uid)
         )
     elif text == "👥 Users" and is_admin(uid):
         await admin_users(update, context)
@@ -2587,7 +2886,7 @@ def main():
         allow_reentry=True,
     )
     wd_conv = ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex("^💸 Withdraw$"), withdraw_start)],
+        entry_points=[MessageHandler(filters.Regex(btn_regex("btn_withdraw")), withdraw_start)],
         states={
             WD_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, withdraw_amount)],
             WD_METHOD: [MessageHandler(filters.TEXT & ~filters.COMMAND, withdraw_method)],
@@ -2595,7 +2894,7 @@ def main():
         fallbacks=[CommandHandler("cancel", cancel)],
     )
     dep_conv = ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex("^💳 Deposit$"), deposit_start)],
+        entry_points=[MessageHandler(filters.Regex(btn_regex("btn_deposit")), deposit_start)],
         states={
             DEP_AMOUNT: [MessageHandler(filters.TEXT & ~filters.COMMAND, deposit_amount)],
             DEP_PROOF: [MessageHandler(filters.PHOTO, deposit_proof)],
@@ -2603,7 +2902,7 @@ def main():
         fallbacks=[CommandHandler("cancel", cancel)],
     )
     post_conv = ConversationHandler(
-        entry_points=[MessageHandler(filters.Regex("^➕ Post Task$"), post_task_start)],
+        entry_points=[MessageHandler(filters.Regex(btn_regex("btn_post")), post_task_start)],
         states={
             POST_TASK_TITLE: [MessageHandler(filters.TEXT & ~filters.COMMAND, post_task_title)],
             POST_TASK_DESC: [MessageHandler(filters.TEXT & ~filters.COMMAND, post_task_desc)],
